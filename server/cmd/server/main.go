@@ -7,31 +7,36 @@ import (
 )
 
 func main() {
-	c3 := game.NewCard(game.Spade, game.Three)
-	c2 := game.NewCard(game.Club, game.Two)
+	fmt.Println("--- ペア判定テスト ---")
+
+	// テスト用カード
+	c3_spade := game.NewCard(game.Spade, game.Three)
+	c3_heart := game.NewCard(game.Heart, game.Three)
+	c4_dia := game.NewCard(game.Diamond, game.Four)
 	joker := game.NewCard(game.Joker, 0)
 
-	fmt.Println("--- 革命テスト (Revolution!) ---")
+	// ケース1: 3のペア (3, 3) -> 成功するはず
+	pair1 := []game.Card{c3_spade, c3_heart}
+	fmt.Printf("1. [♠3, ♥3] はペア？ -> %v\n", game.IsPair(pair1))
 
-	// 革命状態をONにする
-	isRevolution := true
+	// ケース2: 3とJoker (3, Joker) -> 成功するはず
+	pair2 := []game.Card{c3_spade, joker}
+	fmt.Printf("2. [♠3, Joker] はペア？ -> %v\n", game.IsPair(pair2))
 
-	// テスト1: 3 vs 2
-	// 3の強さ: -1, 2の強さ: -14
-	if game.IsStronger(c3, c2, isRevolution) {
-		fmt.Printf("革命中: %s は %s より強い -> OK!\n", c3, c2)
-	} else {
-		fmt.Printf("革命中: %s は %s より弱い -> NG...\n", c3, c2)
-	}
+	// ケース3: バラバラ (3, 4) -> 失敗するはず
+	pair3 := []game.Card{c3_spade, c4_dia}
+	fmt.Printf("3. [♠3, ♦4] はペア？ -> %v\n", game.IsPair(pair3))
 
-	// テスト2: Joker vs 3
-	if game.IsStronger(joker, c3, isRevolution) {
-		fmt.Printf("革命中: %s は %s より強い -> OK!\n", joker, c3)
-	} else {
-		fmt.Printf("革命中: %s は %s より弱い -> NG...\n", joker, c3)
-	}
+	// ケース4: 3枚ペア (3, 3, Joker) -> 成功するはず
+	pair4 := []game.Card{c3_spade, c3_heart, joker}
+	fmt.Printf("4. [♠3, ♥3, Joker] はペア？ -> %v\n", game.IsPair(pair4))
 
-	fmt.Println("------------------------------")
+	fmt.Println("--------------------")
 
+	// サーバー起動処理
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "Server OK")
+	})
+	fmt.Println("Server Start...")
 	http.ListenAndServe(":8080", nil)
 }
