@@ -2,39 +2,36 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-
-	// 作った game パッケージを読み込みます
 	"millionaire/internal/game"
+	"net/http"
 )
 
 func main() {
-	// 1. 山札を作成
-	fmt.Println("1. 山札を新品で作成します...")
-	deck := game.NewDeck(1)
-	fmt.Printf("   -> 合計枚数: %d枚\n", len(deck))
+	c3 := game.NewCard(game.Spade, game.Three)
+	c2 := game.NewCard(game.Club, game.Two)
+	joker := game.NewCard(game.Joker, 0)
 
-	// 2. シャッフル
-	fmt.Println("2. シャッフルします...")
-	deck.Shuffle()
+	fmt.Println("--- 革命テスト (Revolution!) ---")
 
-	// 3. 5枚引いてみる
-	fmt.Println("3. 上から5枚引いてみます...")
-	hand := deck.Draw(5)
+	// 革命状態をONにする
+	isRevolution := true
 
-	// 4. 引いたカードを画面に出力
-	fmt.Println("--- 引いたカード ---")
-	for _, c := range hand {
-		fmt.Printf("%s ", c)
+	// テスト1: 3 vs 2
+	// 3の強さ: -1, 2の強さ: -14
+	if game.IsStronger(c3, c2, isRevolution) {
+		fmt.Printf("革命中: %s は %s より強い -> OK!\n", c3, c2)
+	} else {
+		fmt.Printf("革命中: %s は %s より弱い -> NG...\n", c3, c2)
 	}
-	fmt.Println("\n-------------------")
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "大富豪サーバー、稼働中！")
-	})
-
-	fmt.Println("サーバーがポート8080で起動しました")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Println("起動エラー:", err)
+	// テスト2: Joker vs 3
+	if game.IsStronger(joker, c3, isRevolution) {
+		fmt.Printf("革命中: %s は %s より強い -> OK!\n", joker, c3)
+	} else {
+		fmt.Printf("革命中: %s は %s より弱い -> NG...\n", joker, c3)
 	}
+
+	fmt.Println("------------------------------")
+
+	http.ListenAndServe(":8080", nil)
 }
