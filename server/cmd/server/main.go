@@ -7,33 +7,34 @@ import (
 )
 
 func main() {
-	fmt.Println("--- ペア判定テスト ---")
+	fmt.Println("--- 階段判定テスト ---")
 
-	// テスト用カード
-	c3_spade := game.NewCard(game.Spade, game.Three)
-	c3_heart := game.NewCard(game.Heart, game.Three)
-	c4_dia := game.NewCard(game.Diamond, game.Four)
+	c3 := game.NewCard(game.Spade, game.Three)
+	c4 := game.NewCard(game.Spade, game.Four)
+	c5 := game.NewCard(game.Spade, game.Five)
+	c7 := game.NewCard(game.Spade, game.Seven) // 6が抜けている
 	joker := game.NewCard(game.Joker, 0)
 
-	// ケース1: 3のペア (3, 3) -> 成功するはず
-	pair1 := []game.Card{c3_spade, c3_heart}
-	fmt.Printf("1. [♠3, ♥3] はペア？ -> %v\n", game.IsPair(pair1))
+	// ケース1: バラバラの順番 (5, 3, 4) -> ソートして判定できるか？
+	seq1 := []game.Card{c5, c3, c4}
+	fmt.Printf("1. [♠5, ♠3, ♠4] は階段？ -> %v\n", game.IsSequence(seq1))
 
-	// ケース2: 3とJoker (3, Joker) -> 成功するはず
-	pair2 := []game.Card{c3_spade, joker}
-	fmt.Printf("2. [♠3, Joker] はペア？ -> %v\n", game.IsPair(pair2))
+	// ケース2: マーク違い (♠3, ♥4, ♠5) -> Falseになるか？
+	c4_heart := game.NewCard(game.Heart, game.Four)
+	seq2 := []game.Card{c3, c4_heart, c5}
+	fmt.Printf("2. [♠3, ♥4, ♠5] は階段？ -> %v\n", game.IsSequence(seq2))
 
-	// ケース3: バラバラ (3, 4) -> 失敗するはず
-	pair3 := []game.Card{c3_spade, c4_dia}
-	fmt.Printf("3. [♠3, ♦4] はペア？ -> %v\n", game.IsPair(pair3))
+	// ケース3: 穴あき階段とジョーカー (3, Joker, 5) -> Jokerが4の代わりになるか？
+	// 差が2あるので、Jokerを1枚消費して成立するはず
+	seq3 := []game.Card{c3, joker, c5}
+	fmt.Printf("3. [♠3, Joker, ♠5] は階段？ -> %v\n", game.IsSequence(seq3))
 
-	// ケース4: 3枚ペア (3, 3, Joker) -> 成功するはず
-	pair4 := []game.Card{c3_spade, c3_heart, joker}
-	fmt.Printf("4. [♠3, ♥3, Joker] はペア？ -> %v\n", game.IsPair(pair4))
+	// ケース4: 穴が大きすぎる (3, Joker, 7) -> Joker1枚じゃ埋まらない (4,5,6が必要)
+	seq4 := []game.Card{c3, joker, c7}
+	fmt.Printf("4. [♠3, Joker, ♠7] は階段？ -> %v\n", game.IsSequence(seq4))
 
 	fmt.Println("--------------------")
 
-	// サーバー起動処理
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "Server OK")
 	})
