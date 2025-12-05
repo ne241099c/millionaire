@@ -64,9 +64,11 @@
             const text = input.value;
             if (!text) return;
 
-            // サーバーに送る！
+            // 入力された文字をそのままサーバーに送る！
+            // (JSONは手動で入力欄に書くことにします)
             socket.send(text);
-            input.value = ""; // 入力欄を空にする
+            
+            input.value = "";
         }
 
         // Enterキーでも送信できるようにする
