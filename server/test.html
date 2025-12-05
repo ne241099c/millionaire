@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>大富豪 デバッグルーム</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #log { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            height: 300px; 
+            overflow-y: scroll; 
+            background: #f9f9f9;
+            margin-bottom: 10px;
+        }
+        .message { margin: 5px 0; border-bottom: 1px dotted #eee; }
+        .controls { display: flex; gap: 10px; }
+        input { flex: 1; padding: 5px; }
+        button { padding: 5px 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>♠ 大富豪 デバッグルーム ♦</h1>
+    
+    <div id="log"></div>
+
+    <div class="controls">
+        <input type="text" id="msg" placeholder="メッセージを入力..." autofocus>
+        <button onclick="send()">送信</button>
+    </div>
+
+    <script>
+        // 1. 接続
+        const socket = new WebSocket("ws://" + window.location.host + "/ws");
+
+        // 2. 接続時の処理
+        socket.onopen = function() {
+            appendLog("✅ サーバーに接続しました");
+        };
+
+        // 3. 切断時の処理
+        socket.onclose = function() {
+            appendLog("❌ 切断されました");
+        };
+
+        // 4. メッセージ受信時の処理
+        socket.onmessage = function(event) {
+            appendLog("受信: " + event.data);
+        };
+
+        // 画面に文字を追加する便利関数
+        function appendLog(text) {
+            const log = document.getElementById("log");
+            const div = document.createElement("div");
+            div.className = "message";
+            div.textContent = text;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight; // 自動スクロール
+        }
+
+        // 送信ボタンを押した時の処理
+        function send() {
+            const input = document.getElementById("msg");
+            const text = input.value;
+            if (!text) return;
+
+            // サーバーに送る！
+            socket.send(text);
+            input.value = ""; // 入力欄を空にする
+        }
+
+        // Enterキーでも送信できるようにする
+        document.getElementById("msg").onkeydown = function(e) {
+            if (e.key === "Enter") send();
+        };
+    </script>
+</body>
+</html>
