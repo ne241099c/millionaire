@@ -4,77 +4,157 @@
     <meta charset="UTF-8">
     <title>大富豪 デバッグルーム</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #log { 
-            border: 1px solid #ccc; 
-            padding: 10px; 
-            height: 300px; 
-            overflow-y: scroll; 
-            background: #f9f9f9;
-            margin-bottom: 10px;
+        body { font-family: monospace; padding: 20px; background: #eee; }
+        #game-area { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .card { 
+            display: inline-block; border: 1px solid #999; background: #fff; 
+            padding: 5px 10px; margin: 2px; cursor: pointer; border-radius: 4px; 
+            user-select: none;
         }
-        .message { margin: 5px 0; border-bottom: 1px dotted #eee; }
-        .controls { display: flex; gap: 10px; }
-        input { flex: 1; padding: 5px; }
-        button { padding: 5px 15px; cursor: pointer; }
+        .card.selected { background: #e0f7fa; border-color: #00bcd4; font-weight: bold; }
+        #log { height: 200px; overflow-y: scroll; border: 1px solid #ccc; background: #fff; padding: 10px; }
+        .red { color: red; }
+        .black { color: black; }
     </style>
 </head>
 <body>
     <h1>♠ 大富豪 デバッグルーム ♦</h1>
-    
-    <div id="log"></div>
 
-    <div class="controls">
-        <input type="text" id="msg" placeholder="メッセージを入力..." autofocus>
-        <button onclick="send()">送信</button>
+    <div style="margin-bottom: 10px;">
+        <button onclick="startGame()">▶ ゲーム開始 (Start)</button>
+        <button onclick="sendPlay()">🃏 選択したカードを出す (Play)</button>
     </div>
 
+    <div id="game-area">
+        <h3>場 (Table): <span id="table-cards">なし</span></h3>
+        <hr>
+        <h3>あなたの手札 (Hand): <span id="hand-count">0</span>枚</h3>
+        <div id="hand-container">
+            (ゲームを開始してください)
+        </div>
+    </div>
+
+    <div id="log"></div>
+
     <script>
-        // 1. 接続
         const socket = new WebSocket("ws://" + window.location.host + "/ws");
+        
+        // 選択されたカードを覚えておくリスト
+        let selectedCards = [];
 
-        // 2. 接続時の処理
-        socket.onopen = function() {
-            appendLog("✅ サーバーに接続しました");
-        };
+        // 接続ログ
+        socket.onopen = () => log("✅ 接続しました");
+        socket.onclose = () => log("❌ 切断されました");
 
-        // 3. 切断時の処理
-        socket.onclose = function() {
-            appendLog("❌ 切断されました");
-        };
-
-        // 4. メッセージ受信時の処理
+        // メッセージ受信
         socket.onmessage = function(event) {
-            appendLog("受信: " + event.data);
-        };
-
-        // 画面に文字を追加する便利関数
-        function appendLog(text) {
-            const log = document.getElementById("log");
-            const div = document.createElement("div");
-            div.className = "message";
-            div.textContent = text;
-            log.appendChild(div);
-            log.scrollTop = log.scrollHeight; // 自動スクロール
-        }
-
-        // 送信ボタンを押した時の処理
-        function send() {
-            const input = document.getElementById("msg");
-            const text = input.value;
-            if (!text) return;
-
-            // 入力された文字をそのままサーバーに送る！
-            // (JSONは手動で入力欄に書くことにします)
-            socket.send(text);
+            const msg = JSON.parse(event.data);
             
-            input.value = "";
+            if (msg.type === "game_status") {
+                renderGame(msg.payload);
+            } else if (msg.type === "play_card") {
+                // 自分や他人が出した時の通知(現在はBroadcastで生データが返ってくるため)
+                log("📩 受信: " + event.data);
+            } else {
+                log("📩 受信: " + event.data);
+            }
+        };
+
+        // ゲーム開始コマンド
+        function startGame() {
+            socket.send(JSON.stringify({ type: "start_game", payload: {} }));
         }
 
-        // Enterキーでも送信できるようにする
-        document.getElementById("msg").onkeydown = function(e) {
-            if (e.key === "Enter") send();
-        };
+        // カードを出すコマンド
+        function sendPlay() {
+            if (selectedCards.length === 0) {
+                alert("カードを選択してください");
+                return;
+            }
+            // 選択されたカードを使ってJSONを作る
+            const payload = { cards: selectedCards };
+            const msg = { type: "play_card", payload: payload };
+            
+            log("📤 送信: " + JSON.stringify(msg));
+            socket.send(JSON.stringify(msg));
+            
+            // 選択解除
+            selectedCards = [];
+            renderHand(); // 再描画
+        }
+
+        // 画面描画
+        let currentHand = []; // 最新の手札データを保存
+        
+        function renderGame(status) {
+            // 場のカード表示
+            const tableArea = document.getElementById("table-cards");
+            if (status.table_cards && status.table_cards.length > 0) {
+                tableArea.innerHTML = status.table_cards.map(c => cardStr(c)).join(" ");
+            } else {
+                tableArea.innerHTML = "なし";
+            }
+
+            // 手札表示
+            document.getElementById("hand-count").innerText = status.hand ? status.hand.length : 0;
+            const container = document.getElementById("hand-container");
+            container.innerHTML = "";
+            
+            currentHand = status.hand || []; // 更新
+            
+            currentHand.forEach((card, index) => {
+                const div = document.createElement("div");
+                div.className = "card " + (isSelected(card) ? "selected" : "");
+                div.innerHTML = cardStr(card);
+                
+                // クリックで選択/解除
+                div.onclick = () => {
+                    toggleSelect(card);
+                    renderHand(); // 色を変えるために再描画
+                };
+                container.appendChild(div);
+            });
+        }
+
+        // 手札だけ再描画(選択状態の更新用)
+        function renderHand() {
+            const container = document.getElementById("hand-container");
+            Array.from(container.children).forEach((div, i) => {
+                const card = currentHand[i];
+                if (isSelected(card)) div.classList.add("selected");
+                else div.classList.remove("selected");
+            });
+        }
+
+        // 便利関数
+        function toggleSelect(card) {
+            // すでに選択済みなら解除、なければ追加
+            const idx = selectedCards.findIndex(c => c.Suit === card.Suit && c.Rank === card.Rank);
+            if (idx >= 0) {
+                selectedCards.splice(idx, 1);
+            } else {
+                selectedCards.push(card);
+            }
+        }
+        function isSelected(card) {
+            return selectedCards.some(c => c.Suit === card.Suit && c.Rank === card.Rank);
+        }
+
+        // カードの数字とマークを文字にする
+        function cardStr(c) {
+            const suits = ["♠", "♥", "♦", "♣", "Joker"];
+            const ranks = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+            const color = (c.Suit === 1 || c.Suit === 2) ? "red" : "black";
+            
+            if (c.Suit === 4) return `<span class="red">Joker</span>`;
+            return `<span class="${color}">${suits[c.Suit]}${ranks[c.Rank]}</span>`;
+        }
+
+        function log(text) {
+            const el = document.getElementById("log");
+            el.innerHTML += `<div>${text}</div>`;
+            el.scrollTop = el.scrollHeight;
+        }
     </script>
 </body>
 </html>

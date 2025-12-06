@@ -12,6 +12,8 @@ const (
 	MsgPass     MessageType = "pass"      // パスする
 	MsgJoin     MessageType = "join"      // 参加したい
 
+	MsgStartGame MessageType = "start_game" // ゲーム開始要求
+
 	// サーバー -> クライアント
 	MsgGameStatus MessageType = "game_status" // 現在の場の状況
 	MsgError      MessageType = "error"       // エラー発生

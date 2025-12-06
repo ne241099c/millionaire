@@ -56,8 +56,18 @@ func (c *Client) ReadPump() {
 				break
 			}
 
-			log.Printf("★カードが出されました: %v", payload.Cards)
-			// (ここに後でゲームの処理を書く)
+			action := GameAction{
+				Client:  c,
+				Message: msg,
+			}
+			c.Hub.Actions <- action
+
+		case game.MsgStartGame:
+			action := GameAction{
+				Client:  c,
+				Message: msg,
+			}
+			c.Hub.Actions <- action
 
 		case game.MsgPass:
 			log.Println("★パスされました")
