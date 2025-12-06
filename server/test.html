@@ -20,12 +20,16 @@
 <body>
     <h1>♠ 大富豪 デバッグルーム ♦</h1>
 
-<div style="margin-bottom: 10px;">
+    <div style="margin-bottom: 10px;">
         <button id="btn-start" onclick="startGame()">▶ ゲーム開始</button>
         
         <button id="btn-pass" onclick="sendPass()" style="background-color: #ffccbc; display: none;">🛑 パス</button>
         
         <button onclick="sendPlay()">🃏 カードを出す</button>
+    </div>
+
+    <div id="status-bar" style="padding: 10px; margin-bottom: 10px; font-weight: bold; font-size: 1.2em; border: 2px solid #ccc; background: #fff;">
+        待機中...
     </div>
 
     <div id="game-area">
@@ -96,6 +100,33 @@
         let currentHand = []; // 最新の手札データを保存
         
         function renderGame(status) {
+            const statusBar = document.getElementById("status-bar");
+            const btnPass = document.getElementById("btn-pass");
+            const btnPlay = document.querySelector("button[onclick='sendPlay()']"); // カード出すボタン
+
+            if (status.is_my_turn) {
+                // 自分の番！
+                statusBar.innerText = "👉 あなたの番です！";
+                statusBar.style.backgroundColor = "#e0f7fa"; // 水色
+                statusBar.style.borderColor = "#00bcd4";
+                
+                // ボタンを有効化
+                btnPass.disabled = false;
+                btnPlay.disabled = false;
+            } else {
+                // 待機中...
+                statusBar.innerText = "⏳ 相手の番です...";
+                statusBar.style.backgroundColor = "#eeeeee"; // 灰色
+                statusBar.style.borderColor = "#ccc";
+
+                // ボタンを無効化 (押せなくする)
+                // ※ゲーム開始前(手札なし)の場合は無効化しないように調整
+                if (status.hand && status.hand.length > 0) {
+                    btnPass.disabled = true;
+                    btnPlay.disabled = true;
+                }
+            }
+
             const isGameActive = (status.hand && status.hand.length > 0) || (status.table_cards && status.table_cards.length > 0);
             
             if (isGameActive) {

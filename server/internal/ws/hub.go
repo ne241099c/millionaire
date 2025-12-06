@@ -113,10 +113,15 @@ func (h *Hub) broadcastStatus() {
 			}
 		}
 
+		currentPlayer := h.Game.Players[h.Game.TurnIndex]
+		IsMyTurn := (currentPlayer.ID == playerID)
+
+		// ステータス作成
 		status := game.GameStatusPayload{
 			Hand:        myHand,              // 手札
 			TableCards:  h.Game.TableCards,   // 場のカード
 			PlayerCount: len(h.Game.Players), // 参加人数
+			IsMyTurn:    IsMyTurn,            // 自分の番?
 		}
 
 		// JASONに変換
