@@ -9,14 +9,13 @@ type Player struct {
 }
 
 type Game struct {
-	Players []*Player // 参加プレイヤーのリスト
-
-	TableCards   []Card // 現在場に出ているカード
-	LastPlayerID string // 最後にカードを出した人のID
-
-	TurnIndex    int  // 何番目の人のターンか
-	IsRevolution bool // 革命中かどうか
-	PassCount    int  // 連続パスの数
+	Players         []*Player // 参加プレイヤーのリスト
+	FinishedPlayers []*Player // 順位が決まったプレイヤーのリスト
+	TableCards      []Card    // 現在場に出ているカード
+	LastPlayerID    string    // 最後にカードを出した人のID
+	TurnIndex       int       // 何番目の人のターンか
+	IsRevolution    bool      // 革命中かどうか
+	PassCount       int       // 連続パスの数
 }
 
 type HandType int
@@ -30,9 +29,10 @@ const (
 
 func NewGame() *Game {
 	return &Game{
-		Players:    make([]*Player, 0),
-		TableCards: make([]Card, 0),
-		TurnIndex:  0,
+		Players:         make([]*Player, 0),
+		FinishedPlayers: make([]*Player, 0),
+		TableCards:      make([]Card, 0),
+		TurnIndex:       0,
 	}
 }
 
@@ -161,6 +161,28 @@ func (g *Game) PlayCard(playerID string, cards []Card) error {
 		fmt.Printf("★革命が起きました！ (Revolution: %v)\n", g.IsRevolution)
 	}
 
+	// あがり判定
+	if len(currentPlayer.Hand) == 0 {
+		// 順位リストに追加
+		g.FinishedPlayers = append(g.FinishedPlayers, currentPlayer)
+		// ランクセット
+		currentPlayer.Rank = len(g.FinishedPlayers)
+
+		fmt.Printf("🎉 おめでとう！ %s さんが %d 位で抜けました！\n", playerID, currentPlayer.Rank)
+
+		//終了チェック
+		if len(g.FinishedPlayers) >= len(g.Players)-1 {
+			fmt.Println("🏁 ゲーム終了！")
+		}
+	}
+
+	if isEight(cards) {
+		fmt.Println("✂️ 8切り発生!場を流して、もう一度あなたの番です")
+		g.clearTable()
+		fmt.Printf("★処理成功: %s が %v を出しました(8切り)\n", playerID, cards)
+		return nil
+	}
+
 	// 次のターンへ
 	g.advanceTurn()
 
@@ -251,9 +273,15 @@ func (g *Game) analyzeHand(cards []Card) (HandType, int, error) {
 }
 
 func (g *Game) advanceTurn() {
-	g.TurnIndex++
-	if g.TurnIndex >= len(g.Players) {
-		g.TurnIndex = 0 // 一周したら最初の人へ
+	for i := 0; i < len(g.Players); i++ {
+		g.TurnIndex++
+		if g.TurnIndex >= len(g.Players) {
+			g.TurnIndex = 0
+		}
+
+		if len(g.Players[g.TurnIndex].Hand) > 0 {
+			return
+		}
 	}
 }
 
@@ -265,12 +293,18 @@ func (g *Game) Pass(playerID string) error {
 	g.PassCount++
 	fmt.Printf("★パス: %s (連続パス %d 回)\n", playerID, g.PassCount)
 
+	activePlayerCount := len(g.Players) - len(g.FinishedPlayers)
+
 	// 全員パスしたかチェック
-	if g.PassCount >= len(g.Players)-1 {
+	if g.PassCount >= activePlayerCount-1 {
 		fmt.Println("★場が流れました！次の親は最後にカードを出した人です")
 		g.clearTable()
 
 		g.setTurnToID(g.LastPlayerID)
+
+		if len(g.Players[g.TurnIndex].Hand) == 0 {
+			g.advanceTurn()
+		}
 
 	} else {
 		g.advanceTurn()
@@ -291,4 +325,14 @@ func (g *Game) setTurnToID(targetID string) {
 			return
 		}
 	}
+}
+
+func isEight(cards []Card) bool {
+	for _, c := range cards {
+		if c.Rank == Eight {
+			return true
+		}
+	}
+
+	return false
 }
