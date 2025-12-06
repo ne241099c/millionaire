@@ -70,7 +70,11 @@ func (c *Client) ReadPump() {
 			c.Hub.Actions <- action
 
 		case game.MsgPass:
-			log.Println("★パスされました")
+			action := GameAction{
+				Client:  c,
+				Message: msg,
+			}
+			c.Hub.Actions <- action
 
 		default:
 			log.Printf("知らないメッセージタイプです: %s", msg.Type)

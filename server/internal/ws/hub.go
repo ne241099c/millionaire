@@ -87,6 +87,15 @@ func (h *Hub) handleGameMessage(action GameAction) {
 		}
 
 	case game.MsgJoin:
+
+	case game.MsgPass:
+		log.Printf("ゲーム処理: %s さんがパスしました", playerID)
+
+		if err := h.Game.Pass(playerID); err != nil {
+			log.Printf("❌ エラー: %v", err)
+		} else {
+			h.broadcastStatus()
+		}
 	}
 }
 

@@ -20,9 +20,12 @@
 <body>
     <h1>♠ 大富豪 デバッグルーム ♦</h1>
 
-    <div style="margin-bottom: 10px;">
-        <button onclick="startGame()">▶ ゲーム開始 (Start)</button>
-        <button onclick="sendPlay()">🃏 選択したカードを出す (Play)</button>
+<div style="margin-bottom: 10px;">
+        <button id="btn-start" onclick="startGame()">▶ ゲーム開始</button>
+        
+        <button id="btn-pass" onclick="sendPass()" style="background-color: #ffccbc; display: none;">🛑 パス</button>
+        
+        <button onclick="sendPlay()">🃏 カードを出す</button>
     </div>
 
     <div id="game-area">
@@ -83,10 +86,27 @@
             renderHand(); // 再描画
         }
 
+        function sendPass() {
+            const msg = { type: "pass", payload: {} }; // パスに中身は不要
+            log("📤 送信: パス");
+            socket.send(JSON.stringify(msg));
+        }
+
         // 画面描画
         let currentHand = []; // 最新の手札データを保存
         
         function renderGame(status) {
+            const isGameActive = (status.hand && status.hand.length > 0) || (status.table_cards && status.table_cards.length > 0);
+            
+            if (isGameActive) {
+                document.getElementById("btn-start").style.display = "none";
+                document.getElementById("btn-pass").style.display = "inline-block";
+            } else {
+                // ゲーム前、または終了後
+                document.getElementById("btn-start").style.display = "inline-block";
+                document.getElementById("btn-pass").style.display = "none";
+            }
+
             // 場のカード表示
             const tableArea = document.getElementById("table-cards");
             if (status.table_cards && status.table_cards.length > 0) {
