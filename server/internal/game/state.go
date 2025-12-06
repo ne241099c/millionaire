@@ -198,6 +198,7 @@ func (g *Game) PlayCard(playerID string, cards []Card) error {
 }
 
 func (g *Game) validatePlay(cards []Card) (int, error) {
+	// 役分析
 	myType, myStr, err := g.analyzeHand(cards)
 	if err != nil {
 		return 0, err
@@ -219,6 +220,14 @@ func (g *Game) validatePlay(cards []Card) (int, error) {
 	// 役チェック
 	if myType != tableType {
 		return 0, fmt.Errorf("役の種類が違います (場:%v vs 出:%v)", tableType, myType)
+	}
+
+	// スペ3チェック
+	isMySpe3 := (len(cards) == 1 && cards[0].Suit == Spade && cards[0].Rank == Three)
+	isTableJoker := (len(g.TableCards) == 1 && g.TableCards[0].Suit == Joker)
+	if isMySpe3 && isTableJoker {
+		fmt.Println("🗡️ スペ3発動!ジョーカーを討ち取りました")
+		return 999, nil
 	}
 
 	// 強さチェック
