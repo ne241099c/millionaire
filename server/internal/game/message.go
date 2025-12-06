@@ -29,8 +29,9 @@ type PlayCardPayload struct {
 }
 
 type GameStatusPayload struct {
-	Hand        []Card `json:"hand"`         // あなたの手札
-	TableCards  []Card `json:"table_cards"`  // 場に出ているカード
-	IsMyTurn    bool   `json:"is_my_turn"`   // あなたの番？
-	PlayerCount int    `json:"player_count"` // 参加人数
+	Hand         []Card `json:"hand"`          // あなたの手札
+	TableCards   []Card `json:"table_cards"`   // 場に出ているカード
+	IsMyTurn     bool   `json:"is_my_turn"`    // あなたの番？
+	PlayerCount  int    `json:"player_count"`  // 参加人数
+	IsRevolution bool   `json:"is_revolution"` // 革命中？
 }

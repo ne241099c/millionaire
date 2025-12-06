@@ -15,6 +15,7 @@ type Game struct {
 	LastPlayerID    string    // 最後にカードを出した人のID
 	TurnIndex       int       // 何番目の人のターンか
 	IsRevolution    bool      // 革命中かどうか
+	Is11Back        bool      // 11バック中かどうか
 	PassCount       int       // 連続パスの数
 }
 
@@ -161,6 +162,12 @@ func (g *Game) PlayCard(playerID string, cards []Card) error {
 		fmt.Printf("★革命が起きました！ (Revolution: %v)\n", g.IsRevolution)
 	}
 
+	// 11バックチェック
+	if isJack(cards) {
+		g.Is11Back = true // Jを出すたびに通常と革命を行ったり来たりさせたい場合はg.Is11Back = !g.Is11Backにする
+		fmt.Println("🃏 11バック! (強さが反転します)")
+	}
+
 	// あがり判定
 	if len(currentPlayer.Hand) == 0 {
 		// 順位リストに追加
@@ -223,13 +230,15 @@ func (g *Game) validatePlay(cards []Card) (int, error) {
 }
 
 func (g *Game) analyzeHand(cards []Card) (HandType, int, error) {
+	effectiveRev := (g.IsRevolution != g.Is11Back)
+
 	count := len(cards)
 	if count == 0 {
 		return HandTypeInvalid, 0, fmt.Errorf("カードがありません")
 	}
 
 	if count == 1 {
-		return HandTypeSingle, GetStrength(cards[0], g.IsRevolution), nil
+		return HandTypeSingle, GetStrength(cards[0], effectiveRev), nil
 	}
 
 	// 階段
@@ -240,14 +249,14 @@ func (g *Game) analyzeHand(cards []Card) (HandType, int, error) {
 			if c.Suit == Joker {
 				continue
 			}
-			s := GetStrength(c, g.IsRevolution)
+			s := GetStrength(c, effectiveRev)
 			if s > maxStr {
 				maxStr = s
 			}
 		}
 
 		if maxStr == -999 {
-			maxStr = GetStrength(cards[0], g.IsRevolution)
+			maxStr = GetStrength(cards[0], effectiveRev)
 		}
 
 		return HandTypeSequence, maxStr, nil
@@ -258,13 +267,13 @@ func (g *Game) analyzeHand(cards []Card) (HandType, int, error) {
 		baseStr := -999
 		for _, c := range cards {
 			if c.Suit != Joker {
-				baseStr = GetStrength(c, g.IsRevolution)
+				baseStr = GetStrength(c, effectiveRev)
 				break
 			}
 		}
 
 		if baseStr == -999 {
-			baseStr = GetStrength(cards[0], g.IsRevolution)
+			baseStr = GetStrength(cards[0], effectiveRev)
 		}
 
 		return HandTypePair, baseStr, nil
@@ -316,6 +325,7 @@ func (g *Game) Pass(playerID string) error {
 func (g *Game) clearTable() {
 	g.TableCards = nil
 	g.PassCount = 0
+	g.Is11Back = false
 }
 
 func (g *Game) setTurnToID(targetID string) {
@@ -330,6 +340,16 @@ func (g *Game) setTurnToID(targetID string) {
 func isEight(cards []Card) bool {
 	for _, c := range cards {
 		if c.Rank == Eight {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isJack(cards []Card) bool {
+	for _, c := range cards {
+		if c.Rank == Jack {
 			return true
 		}
 	}

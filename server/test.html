@@ -100,6 +100,17 @@
         let currentHand = []; // 最新の手札データを保存
         
         function renderGame(status) {
+            const title = document.querySelector("h1");
+            if (status.is_revolution) {
+                title.innerText = "🔥 大富豪 (革命中！) 🔥";
+                title.style.color = "red";
+                document.body.style.backgroundColor = "#ffebee"; // 薄い赤背景
+            } else {
+                title.innerText = "♠ 大富豪 デバッグルーム ♦";
+                title.style.color = "black";
+                document.body.style.backgroundColor = "#eee"; // 通常背景
+            }
+            
             const statusBar = document.getElementById("status-bar");
             const btnPass = document.getElementById("btn-pass");
             const btnPlay = document.querySelector("button[onclick='sendPlay()']"); // カード出すボタン
