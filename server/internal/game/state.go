@@ -5,6 +5,7 @@ import "fmt"
 type Player struct {
 	ID   string
 	Hand []Card
+	Name string
 	Rank int
 }
 
@@ -17,6 +18,7 @@ type Game struct {
 	IsRevolution    bool      // 革命中かどうか
 	Is11Back        bool      // 11バック中かどうか
 	PassCount       int       // 連続パスの数
+	IsActive        bool      // ゲームがアクティブかどうか
 }
 
 type HandType int
@@ -37,7 +39,7 @@ func NewGame() *Game {
 	}
 }
 
-func (g *Game) Join(playerID string) {
+func (g *Game) Join(playerID string, name string) {
 	for _, p := range g.Players {
 		if p.ID == playerID {
 			return
@@ -46,17 +48,25 @@ func (g *Game) Join(playerID string) {
 
 	newPlayer := &Player{
 		ID:   playerID,
+		Name: name,
 		Hand: make([]Card, 0),
 	}
 	g.Players = append(g.Players, newPlayer)
-	fmt.Printf("ゲーム参加: %s (現在 %d 人)\n", playerID, len(g.Players))
+	fmt.Printf("ゲーム参加: %s(%s) (現在 %d 人)\n", name, playerID, len(g.Players))
 }
 
 func (g *Game) Start() {
+	if g.IsActive {
+		fmt.Println("⚠️ ゲームは既に進行中です")
+		return
+	}
+
 	if len(g.Players) < 2 {
 		fmt.Println("エラー: プレイヤーが足りません")
 		return
 	}
+
+	g.IsActive = true
 
 	deck := NewDeck(1)
 	deck.Shuffle()

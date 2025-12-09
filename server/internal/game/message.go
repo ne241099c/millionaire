@@ -28,10 +28,18 @@ type PlayCardPayload struct {
 	Cards []Card `json:"cards"`
 }
 
+type PlayerData struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Hand []Card `json:"hand"`
+	Rank int    `json:"rank"`
+}
+
 type GameStatusPayload struct {
-	Hand         []Card `json:"hand"`          // あなたの手札
-	TableCards   []Card `json:"table_cards"`   // 場に出ているカード
-	IsMyTurn     bool   `json:"is_my_turn"`    // あなたの番？
-	PlayerCount  int    `json:"player_count"`  // 参加人数
-	IsRevolution bool   `json:"is_revolution"` // 革命中？
+	Hand         []Card       `json:"hand"`                  // あなたの手札
+	TableCards   []Card       `json:"table_cards"`           // 場に出ているカード
+	IsMyTurn     bool         `json:"is_my_turn"`            // あなたの番？
+	PlayerCount  int          `json:"player_count"`          // 参加人数
+	IsRevolution bool         `json:"is_revolution"`         // 革命中？
+	AllPlayers   []PlayerData `json:"all_players,omitempty"` // 全プレイヤーの情報
 }

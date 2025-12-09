@@ -1,9 +1,9 @@
 package ws
 
 import (
-	"encoding/json"
 	"log"
 	"millionaire/internal/game"
+	"net/http"
 )
 
 type GameAction struct {
@@ -11,140 +11,65 @@ type GameAction struct {
 	Message game.Message
 }
 
-type Hub struct {
-	Game *game.Game
-
-	Actions chan GameAction
-
-	Clients    map[*Client]bool
-	Broadcast  chan []byte
-	Register   chan *Client
-	Unregister chan *Client
+type Lobby struct {
+	Rooms map[string]*Room
 }
 
-func NewHub() *Hub {
-	return &Hub{
-		Broadcast:  make(chan []byte),
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
-		Clients:    make(map[*Client]bool),
-
-		Game:    game.NewGame(),
-		Actions: make(chan GameAction),
+func NewLobby() *Lobby {
+	return &Lobby{
+		Rooms: make(map[string]*Room),
 	}
 }
 
-func (h *Hub) Run() {
-	for {
-		select {
-		case client := <-h.Register:
-			h.Clients[client] = true
-
-			playerID := client.Conn.RemoteAddr().String()
-			h.Game.Join(playerID)
-
-		case client := <-h.Unregister:
-			if _, ok := h.Clients[client]; ok {
-				delete(h.Clients, client)
-				close(client.Send)
-			}
-
-		case message := <-h.Broadcast:
-			for client := range h.Clients {
-				select {
-				case client.Send <- message:
-				default:
-					close(client.Send)
-					delete(h.Clients, client)
-				}
-			}
-
-		case action := <-h.Actions:
-			h.handleGameMessage(action)
-		}
+func (l *Lobby) CreateRoom(roomID string) *Room {
+	if room, ok := l.Rooms[roomID]; ok {
+		return room
 	}
+
+	// 新しい部屋を作成
+	newRoom := NewRoom(roomID)
+	l.Rooms[roomID] = newRoom
+
+	go newRoom.Run()
+
+	log.Printf("🏢 ロビー: 新しい部屋 [%s] を作成しました", roomID)
+	return newRoom
 }
 
-func (h *Hub) handleGameMessage(action GameAction) {
-	playerID := action.Client.Conn.RemoteAddr().String()
-
-	switch action.Message.Type {
-	case game.MsgStartGame:
-		log.Println("ゲーム開始リクエストを受信しました")
-		h.Game.Start()      // カードを配る
-		h.broadcastStatus() // 全員に知らせる
-
-	case game.MsgPlayCard:
-		var payload game.PlayCardPayload
-		json.Unmarshal(action.Message.Payload, &payload)
-
-		log.Printf("ゲーム処理: %s さんがカードを出そうとしています", playerID)
-
-		if err := h.Game.PlayCard(playerID, payload.Cards); err != nil {
-			log.Printf("❌ エラー: %v", err)
-		} else {
-			h.broadcastStatus()
-		}
-
-	case game.MsgJoin:
-
-	case game.MsgPass:
-		log.Printf("ゲーム処理: %s さんがパスしました", playerID)
-
-		if err := h.Game.Pass(playerID); err != nil {
-			log.Printf("❌ エラー: %v", err)
-		} else {
-			h.broadcastStatus()
-		}
+func (l *Lobby) ServeWs(w http.ResponseWriter, r *http.Request) {
+	// クエリパラメータから部屋IDを取得
+	query := r.URL.Query()
+	roomID := r.URL.Query().Get("room")
+	playerName := query.Get("name")
+	if roomID == "" {
+		roomID = "default" // 指定がなければ "default" 部屋へ
 	}
-}
-
-func (h *Hub) broadcastStatus() {
-	// h.Game.DebugPrint()
-
-	for client := range h.Clients {
-		playerID := client.Conn.RemoteAddr().String()
-
-		var myHand []game.Card
-		for _, p := range h.Game.Players {
-			if p.ID == playerID {
-				myHand = p.Hand
-				break
-			}
-		}
-
-		currentPlayer := h.Game.Players[h.Game.TurnIndex]
-		IsMyTurn := (currentPlayer.ID == playerID)
-		effectiveRev := (h.Game.IsRevolution != h.Game.Is11Back)
-
-		// ステータス作成
-		status := game.GameStatusPayload{
-			Hand:         myHand,              // 手札
-			TableCards:   h.Game.TableCards,   // 場のカード
-			PlayerCount:  len(h.Game.Players), // 参加人数
-			IsMyTurn:     IsMyTurn,            // 自分の番?
-			IsRevolution: effectiveRev,        // 革命中？
-		}
-
-		// JASONに変換
-		payloadBytes, _ := json.Marshal(status)
-
-		// メッセージ作成
-		msg := game.Message{
-			Type:    game.MsgGameStatus,
-			Payload: payloadBytes, // RawMessage型に自動変換
-		}
-
-		// JASONにして送信
-		msgBytes, _ := json.Marshal(msg)
-
-		// 送信
-		select {
-		case client.Send <- msgBytes:
-		default:
-			close(client.Send)
-			delete(h.Clients, client)
-		}
+	if playerName == "" {
+		playerName = "名無し" // ★デフォルト値
 	}
 
+	// 部屋を取得または作成
+	room := l.CreateRoom(roomID)
+
+	// WebSocket接続
+	conn, err := Upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	// 新しいClientを作成
+	client := &Client{
+		Room: room,
+		Conn: conn,
+		Send: make(chan []byte, 256),
+		Name: playerName,
+	}
+
+	// 部屋に入室させる
+	client.Room.Register <- client
+
+	// 読み書き開始
+	go client.WritePump()
+	go client.ReadPump()
 }

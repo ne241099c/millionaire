@@ -44,7 +44,11 @@
     <div id="log"></div>
 
     <script>
-        const socket = new WebSocket("ws://" + window.location.host + "/ws");
+        const params = new URLSearchParams(window.location.search);
+        const roomID = params.get("room") || "default";
+        const socket = new WebSocket("ws://" + window.location.host + "/ws?room=" + roomID);
+
+        console.log("部屋 [" + roomID + "] に接続します");
         
         // 選択されたカードを覚えておくリスト
         let selectedCards = [];
@@ -110,10 +114,40 @@
                 title.style.color = "black";
                 document.body.style.backgroundColor = "#eee"; // 通常背景
             }
-            
+
             const statusBar = document.getElementById("status-bar");
             const btnPass = document.getElementById("btn-pass");
             const btnPlay = document.querySelector("button[onclick='sendPlay()']"); // カード出すボタン
+            const btnStart = document.getElementById("btn-start");
+
+            // --- 観戦モード判定 ---
+            if (status.all_players && status.all_players.length > 0) {
+                statusBar.innerText = "👀 観戦モード (ゲーム進行中)";
+                statusBar.style.backgroundColor = "#fff3e0"; // 薄いオレンジ
+                
+                // 開始ボタンや操作ボタンは消す
+                btnStart.style.display = "none";
+                btnPass.style.display = "none";
+                
+                // 全プレイヤーの手札を表示するエリアを作る
+                const container = document.getElementById("hand-container");
+                container.innerHTML = "<h4>--- 全員の状況 ---</h4>";
+                
+                status.all_players.forEach(p => {
+                    const pDiv = document.createElement("div");
+                    pDiv.style.borderBottom = "1px solid #ccc";
+                    pDiv.style.padding = "5px";
+                    
+                    // 手札を文字列にする
+                    const handStr = p.hand.map(c => cardStr(c)).join(" ");
+                    pDiv.innerHTML = `<strong>${p.id}</strong>: ${handStr}`;
+                    container.appendChild(pDiv);
+                });
+                
+                // 場のカードだけ更新して終了
+                renderTable(status.table_cards);
+                return; // ここで処理を終える
+            }
 
             if (status.is_my_turn) {
                 // 自分の番！
@@ -137,6 +171,8 @@
                     btnPlay.disabled = true;
                 }
             }
+
+            renderTable(status.table_cards);
 
             const isGameActive = (status.hand && status.hand.length > 0) || (status.table_cards && status.table_cards.length > 0);
             
@@ -177,6 +213,16 @@
                 container.appendChild(div);
             });
         }
+
+        function renderTable(cards) {
+            const tableArea = document.getElementById("table-cards");
+            if (cards && cards.length > 0) {
+                tableArea.innerHTML = cards.map(c => cardStr(c)).join(" ");
+            } else {
+                tableArea.innerHTML = "なし";
+            }
+        }
+        
 
         // 手札だけ再描画(選択状態の更新用)
         function renderHand() {

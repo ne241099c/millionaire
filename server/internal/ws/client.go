@@ -18,14 +18,15 @@ var Upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	Hub  *Hub
+	Room *Room
 	Conn *websocket.Conn
 	Send chan []byte
+	Name string
 }
 
 func (c *Client) ReadPump() {
 	defer func() {
-		c.Hub.Unregister <- c
+		c.Room.Unregister <- c
 		c.Conn.Close()
 	}()
 
@@ -60,28 +61,27 @@ func (c *Client) ReadPump() {
 				Client:  c,
 				Message: msg,
 			}
-			c.Hub.Actions <- action
+			c.Room.Actions <- action
 
 		case game.MsgStartGame:
 			action := GameAction{
 				Client:  c,
 				Message: msg,
 			}
-			c.Hub.Actions <- action
+			c.Room.Actions <- action
 
 		case game.MsgPass:
 			action := GameAction{
 				Client:  c,
 				Message: msg,
 			}
-			c.Hub.Actions <- action
+			c.Room.Actions <- action
 
 		default:
 			log.Printf("知らないメッセージタイプです: %s", msg.Type)
 		}
-
-		// 動作確認のために全員にそのままオウム返ししておく
-		c.Hub.Broadcast <- messageData
+		// デバッグ用
+		// c.Room.Broadcast <- messageData
 	}
 }
 

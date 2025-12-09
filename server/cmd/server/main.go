@@ -8,15 +8,13 @@ import (
 )
 
 func main() {
-	// 1. Hubを作成
-	hub := ws.NewHub()
-
-	// 2. Hubゴルーチンとして稼働させる
-	go hub.Run()
+	// 1. Lobbyを作成
+	lobby := ws.NewLobby()
 
 	// 3. WebSocketの受付
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+		// ロビーに案内を任せる
+		lobby.ServeWs(w, r)
 	})
 
 	// 4. ファイル配布
@@ -29,28 +27,4 @@ func main() {
 	if err != nil {
 		log.Fatal("起動失敗: ", err)
 	}
-}
-
-// serveWs は、新しい接続があるたびに呼ばれる関数
-// クライアントを作成し、Hubに登録
-func serveWs(hub *ws.Hub, w http.ResponseWriter, r *http.Request) {
-	// wsパッケージで定義した Upgrader を使って接続をアップグレード
-	conn, err := ws.Upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	// 新しいClientを作成
-	client := &ws.Client{
-		Hub:  hub,
-		Conn: conn,
-		Send: make(chan []byte, 256),
-	}
-
-	// これで Hub.Run() の中の "case client := <-h.Register:" が動く
-	client.Hub.Register <- client
-
-	go client.WritePump()
-	go client.ReadPump()
 }
