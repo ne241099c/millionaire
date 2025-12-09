@@ -18,9 +18,7 @@ func main() {
 	})
 
 	// 4. ファイル配布
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "test.html")
-	})
+	http.Handle("/", http.FileServer(http.Dir("./static")))
 
 	log.Println("サーバー起動: http://localhost:8080")
 	err := http.ListenAndServe(":8080", nil)
