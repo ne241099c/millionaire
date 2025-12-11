@@ -1,7 +1,7 @@
 import styles from './GameRoom.module.css';
 import { Card } from '../../components/Card/Card';
 
-export const GameScreen = ({ gameState, roomID, username }) => {
+export const GameScreen = ({ gameState, roomID, username, onStart }) => {
     if (!gameState) {
         return <div className={styles.container}>データ待機中...</div>;
     }
@@ -13,6 +13,15 @@ export const GameScreen = ({ gameState, roomID, username }) => {
             <header className={styles.header}>
                 <h1>Room: {roomID}</h1>
                 <p>Player: {username}</p>
+
+                <div style={{ margin: '10px 0' }}>
+                    <button
+                        className={styles.button}
+                        onClick={onStart}
+                    >
+                        ▶ ゲーム開始
+                    </button>
+                </div>
             </header>
 
             <main>

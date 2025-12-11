@@ -6,7 +6,7 @@ import './App.css'
 import DebugRoom from './pages/DebugRoom'
 
 function App() {
-  const { isConnected, gameState, connect } = useGame();
+  const { isConnected, gameState, connect , startGame} = useGame();
   const [currentUser, setCurrentUser] = useState({ name: '', room: '' });
 
   const handleJoin = (name, room) => {
@@ -23,6 +23,7 @@ function App() {
       gameState={gameState}
       username={currentUser.name}
       roomID={currentUser.room}
+      onStart={startGame}
     />
   );
 

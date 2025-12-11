@@ -14,11 +14,14 @@
 .handArea {
   display: flex;
   justify-content: center;
-  gap: 10px; /* カード同士の間隔 */
-  flex-wrap: wrap; /* 画面端で折り返す */
+  gap: 10px;
+  /* カード同士の間隔 */
+  flex-wrap: wrap;
+  /* 画面端で折り返す */
   margin-top: 20px;
   padding: 30px;
-  background-color: rgba(0, 0, 0, 0.2); /* 半透明の黒背景 */
+  background-color: rgba(0, 0, 0, 0.2);
+  /* 半透明の黒背景 */
   border-radius: 15px;
   min-height: 120px;
 }
@@ -33,4 +36,14 @@
   text-align: left;
   font-size: 0.8em;
   opacity: 0.7;
+}
+
+.button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
