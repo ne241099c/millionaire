@@ -45,7 +45,7 @@ func (l *Lobby) ServeWs(w http.ResponseWriter, r *http.Request) {
 		roomID = "default" // 指定がなければ "default" 部屋へ
 	}
 	if playerName == "" {
-		playerName = "名無し" // ★デフォルト値
+		playerName = "名無し" // デフォルト値
 	}
 
 	// 部屋を取得または作成

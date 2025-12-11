@@ -1,0 +1,36 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.header {
+  margin-bottom: 20px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 10px;
+}
+
+.handArea {
+  display: flex;
+  justify-content: center;
+  gap: 10px; /* カード同士の間隔 */
+  flex-wrap: wrap; /* 画面端で折り返す */
+  margin-top: 20px;
+  padding: 30px;
+  background-color: rgba(0, 0, 0, 0.2); /* 半透明の黒背景 */
+  border-radius: 15px;
+  min-height: 120px;
+}
+
+.message {
+  color: #fff;
+  font-weight: bold;
+}
+
+.debug {
+  margin-top: 30px;
+  text-align: left;
+  font-size: 0.8em;
+  opacity: 0.7;
+}
