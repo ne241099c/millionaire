@@ -2,7 +2,7 @@ import styles from './GameRoom.module.css';
 import { Card } from '../../components/Card/Card';
 import { useState } from 'react';
 
-export const GameScreen = ({ gameState, roomID, username, onStart, onPlay }) => {
+export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, logout }) => {
     const [selectedCards, setSelectedCards] = useState([]);
     const [isDragOver, setIsDragOver] = useState(false);
 
@@ -61,6 +61,13 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay }) => 
                 <h1>Room: {roomID}</h1>
                 <p>Player: {username}</p>
 
+                <button
+                    onClick={logout}
+                    style={{ marginLeft: '10px', padding: '5px 10px', fontSize: '12px', background: '#666', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                    退出する
+                </button>
+
                 <div style={{ margin: '10px 0' }}>
                     <button
                         className={styles.button}
@@ -82,7 +89,11 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay }) => 
                     {/* 場に出ているカードを表示 */}
                     {tableCards.length > 0 ? (
                         tableCards.map((card, i) => (
-                            <Card key={`table-${i}`} card={card} isSelected={false} />
+                            <Card
+                                key={`table-${i}`}
+                                card={card}
+                                isSelected={false}
+                            />
                         ))
                     ) : (
                         <span style={{ color: '#ddd', opacity: 0.5 }}>No Cards</span>

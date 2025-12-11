@@ -1,5 +1,5 @@
 import DebugRoom from "../pages/DebugRoom"
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 
 export const useGame = () => {
     // 接続状態
@@ -8,14 +8,41 @@ export const useGame = () => {
     // ゲーム状態
     const [gameState, setGameState] = useState(null)
 
+    // 入室チェック中かどうか
+    const [isEntry, setIsEntry] = useState(true);
+
     // WebSocket接続
     const socketRef = useRef(null)
+
+    useEffect(() => {
+        const savedName = sessionStorage.getItem("poker_name");
+        const savedRoom = sessionStorage.getItem("poker_room");
+
+        if (savedName && savedRoom && !socketRef.current) {
+            console.log("🔄 前回のセッションから復帰します...");
+            setTimeout(() => {
+                connect(savedName, savedRoom);
+                setIsEntry(false); // チェック完了
+            }, 500);
+            connect(savedName, savedRoom);
+        } else {
+            setIsEntry(false); // チェック完了
+        }
+    }, []);
 
     const connect = (name, roomID) => {
         if (!name) {
             alert("名前を入力してください")
             return
         }
+
+        if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+            console.log("すでに接続済みです");
+            return;
+        }
+
+        sessionStorage.setItem("poker_name", name);
+        sessionStorage.setItem("poker_room", roomID);
 
         const baseUrl = import.meta.env.VITE_WS_URL
         if (!baseUrl) {
@@ -27,6 +54,7 @@ export const useGame = () => {
         console.log("接続開始:", wsUrl)
 
         const ws = new WebSocket(wsUrl)
+        socketRef.current = ws;
 
         // 接続成功時の処理
         ws.onopen = () => {
@@ -46,9 +74,15 @@ export const useGame = () => {
 
         // 切断されたときの処理
         ws.onclose = () => {
+            if (socketRef.current !== ws) {
+                console.log("古い接続の切断を無視しました");
+                return;
+            }
+
             console.log("❌ 切断されました")
             setIsConnected(false) // ログイン画面に戻す
             setGameState(null)
+            socketRef.current = null;
         };
 
         socketRef.current = ws
@@ -82,6 +116,20 @@ export const useGame = () => {
         console.log("📤 カードを送信:", cards);
     };
 
+    const logout = () => {
+        // セッション情報を削除
+        sessionStorage.removeItem("poker_name");
+        sessionStorage.removeItem("poker_room");
+        
+        // ソケットを切断
+        if (socketRef.current) {
+            socketRef.current.close();
+        }
+        // 画面をリセット
+        setIsConnected(false);
+        setGameState(null);
+    };
+
     // 片付け
     useEffect(() => {
         return () => {
@@ -94,6 +142,7 @@ export const useGame = () => {
     return {
         isConnected,
         gameState,
+        isEntry,
         connect,
         startGame,
         playCards,
