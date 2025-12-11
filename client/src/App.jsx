@@ -6,7 +6,16 @@ import './App.css'
 import DebugRoom from './pages/DebugRoom'
 
 function App() {
-  const { isConnected, gameState, isEntry, connect, startGame, playCards, logout} = useGame();
+  const {
+    isConnected,
+    gameState,
+    isEntry,
+    connect,
+    startGame,
+    playCards,
+    passTurn,
+    logout
+  } = useGame();
   const [currentUser, setCurrentUser] = useState({ name: '', room: '' });
 
   const handleJoin = (name, room) => {
@@ -16,13 +25,13 @@ function App() {
 
   if (isEntry) {
     return (
-      <div className="container" style={{marginTop: '50px'}}>
+      <div className="container" style={{ marginTop: '50px' }}>
         <h2>🔄 復帰中...</h2>
         <p>サーバーと通信しています</p>
       </div>
     );
   }
-  
+
   if (!isConnected) {
     return <LoginScreen onJoin={handleJoin} />;
   }
@@ -34,6 +43,7 @@ function App() {
       roomID={currentUser.room}
       onStart={startGame}
       onPlay={playCards}
+      onPass={passTurn}
       logout={logout}
     />
   );

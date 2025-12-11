@@ -14,6 +14,8 @@ export const useGame = () => {
     // WebSocket接続
     const socketRef = useRef(null)
 
+    const timerRef = useRef(null);
+
     useEffect(() => {
         const savedName = sessionStorage.getItem("poker_name");
         const savedRoom = sessionStorage.getItem("poker_room");
@@ -24,10 +26,14 @@ export const useGame = () => {
                 connect(savedName, savedRoom);
                 setIsEntry(false); // チェック完了
             }, 500);
-            connect(savedName, savedRoom);
         } else {
             setIsEntry(false); // チェック完了
         }
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+            }
+        };
     }, []);
 
     const connect = (name, roomID) => {
@@ -116,6 +122,18 @@ export const useGame = () => {
         console.log("📤 カードを送信:", cards);
     };
 
+    const passTurn = () => {
+        if (!socketRef.current) return;
+
+        const msg = {
+            type: "pass", // Go側の MsgPassTurn に対応
+            payload: {}
+        };
+
+        socketRef.current.send(JSON.stringify(msg));
+        console.log("📤 パスしました");
+    };
+
     const logout = () => {
         // セッション情報を削除
         sessionStorage.removeItem("poker_name");
@@ -146,5 +164,7 @@ export const useGame = () => {
         connect,
         startGame,
         playCards,
+        passTurn,
+        logout
     };
 };

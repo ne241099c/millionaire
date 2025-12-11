@@ -68,6 +68,13 @@ func (g *Game) Start() {
 
 	g.IsActive = true
 
+	for _, p := range g.Players {
+		p.Hand = make([]Card, 0)
+		p.Rank = 0
+	}
+
+	g.FinishedPlayers = make([]*Player, 0)
+
 	deck := NewDeck(1)
 	deck.Shuffle()
 
@@ -190,6 +197,8 @@ func (g *Game) PlayCard(playerID string, cards []Card) error {
 		//終了チェック
 		if len(g.FinishedPlayers) >= len(g.Players)-1 {
 			fmt.Println("🏁 ゲーム終了！")
+			g.IsActive = false
+			g.TableCards = nil
 		}
 	}
 
@@ -374,4 +383,90 @@ func isJack(cards []Card) bool {
 	}
 
 	return false
+}
+
+func (g *Game) Leave(playerID string) {
+	foundIdx := -1
+	for i, p := range g.Players {
+		if p.ID == playerID {
+			foundIdx = i
+			break
+		}
+	}
+
+	if foundIdx == -1 {
+		return // いない人は無視
+	}
+
+	// 抜けた人が自分より前の番だったら、TurnIndexを1つ戻す
+	if foundIdx < g.TurnIndex {
+		g.TurnIndex--
+	}
+
+	// 抜けた人が最後にカードを出した人だったら、場を流す
+	if g.LastPlayerID == playerID {
+		g.clearTable()
+		fmt.Println("親が退出したため、場を流しました")
+
+		// ターンを、抜けた人の次の人に強制設定
+		if g.TurnIndex >= len(g.Players)-1 {
+			g.TurnIndex = 0
+		}
+	}
+
+	// プレイヤーリストから削除
+	g.Players = append(g.Players[:foundIdx], g.Players[foundIdx+1:]...)
+	fmt.Printf("🚪 ゲーム退出: %s (残り %d 人)\n", playerID, len(g.Players))
+
+	if g.TurnIndex >= len(g.Players) {
+		g.TurnIndex = 0
+	}
+
+	// 終了判定
+	activeCount := 0
+	for _, p := range g.Players {
+		isFinished := false
+		for _, fp := range g.FinishedPlayers {
+			if fp.ID == p.ID {
+				isFinished = true
+				break
+			}
+		}
+		if !isFinished {
+			activeCount++
+		}
+	}
+
+	if g.IsActive && activeCount < 2 {
+		fmt.Println("🏁 残り1人になったため、ゲームを終了します")
+		g.IsActive = false
+		g.TableCards = nil
+
+		for _, p := range g.Players {
+			// まだあがっていない人を探す
+			isFinished := false
+			for _, fp := range g.FinishedPlayers {
+				if fp.ID == p.ID {
+					isFinished = true
+					break
+				}
+			}
+
+			// その人を1位にする
+			if !isFinished {
+				g.FinishedPlayers = append([]*Player{p}, g.FinishedPlayers...)
+				break
+			}
+		}
+	}
+
+	// 0人になったらリセット
+	if len(g.Players) == 0 {
+		g.IsActive = false
+		g.TableCards = nil
+		g.FinishedPlayers = nil
+		g.TurnIndex = 0
+		fmt.Println("誰もいなくなったのでゲームをリセットしました")
+		return
+	}
 }

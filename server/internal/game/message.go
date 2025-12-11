@@ -42,4 +42,6 @@ type GameStatusPayload struct {
 	PlayerCount  int          `json:"player_count"`          // 参加人数
 	IsRevolution bool         `json:"is_revolution"`         // 革命中？
 	AllPlayers   []PlayerData `json:"all_players,omitempty"` // 全プレイヤーの情報
+	WinnerName   string       `json:"winner_name"`           // 勝者の名前
+	IsActive     bool         `json:"is_active"`             // ゲームがアクティブかどうか
 }

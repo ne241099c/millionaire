@@ -2,7 +2,7 @@ import styles from './GameRoom.module.css';
 import { Card } from '../../components/Card/Card';
 import { useState } from 'react';
 
-export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, logout }) => {
+export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPass, logout }) => {
     const [selectedCards, setSelectedCards] = useState([]);
     const [isDragOver, setIsDragOver] = useState(false);
 
@@ -12,6 +12,9 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, logou
 
     const hand = gameState.hand || [];
     const tableCards = gameState.table_cards || [];
+    const isActive = gameState.is_active;
+    const isMyTurn = gameState.is_my_turn;
+    const winnerName = gameState.winner_name;
 
     const toggleCard = (card) => {
         setSelectedCards(prev => {
@@ -55,6 +58,32 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, logou
         setSelectedCards([]); // 選択解除
     };
 
+    if (!isActive && winnerName) {
+        return (
+            <div className={styles.container}>
+                <div style={{
+                    padding: '40px',
+                    background: 'white',
+                    borderRadius: '10px',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
+                }}>
+                    <h1 style={{ color: '#E91E63', fontSize: '3rem' }}>🏆 GAME SET!</h1>
+                    <h2>勝者: {winnerName}</h2>
+                    <br />
+                    <button
+                        className={styles.button}
+                        onClick={onStart}
+                        style={{ fontSize: '1.2em', padding: '15px 30px' }}
+                    >
+                        もう一度遊ぶ
+                    </button>
+                    <br /><br />
+                    <button onClick={logout}>退出する</button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={styles.container}>
             <header className={styles.header}>
@@ -68,14 +97,32 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, logou
                     退出する
                 </button>
 
-                <div style={{ margin: '10px 0' }}>
-                    <button
-                        className={styles.button}
-                        onClick={onStart}
-                    >
-                        ▶ ゲーム開始
-                    </button>
-                </div>
+                {!isActive && (
+                    <div style={{ margin: '10px 0' }}>
+                        <button className={styles.button} onClick={onStart}>
+                            ▶ ゲーム開始
+                        </button>
+                    </div>
+                )}
+
+                {isActive && (
+                    <div style={{ margin: '10px 0' }}>
+                        <button
+                            onClick={onPass}
+                            disabled={!isMyTurn}
+                            style={{
+                                padding: '10px 20px',
+                                fontSize: '16px',
+                                background: isMyTurn ? '#ff9800' : '#ccc', 
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: isMyTurn ? 'pointer' : 'not-allowed'
+                            }}>
+                            🛑 パス
+                        </button>
+                    </div>
+                )}
             </header>
 
             <main>

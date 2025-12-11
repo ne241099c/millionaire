@@ -44,8 +44,11 @@ func (r *Room) Run() {
 
 		case client := <-r.Unregister:
 			if _, ok := r.Clients[client]; ok {
+				playerID := client.Conn.RemoteAddr().String()
+				r.Game.Leave(playerID)
 				delete(r.Clients, client)
 				close(client.Send)
+				r.broadcastStatus()
 			}
 
 		case message := <-r.Broadcast:
@@ -134,6 +137,12 @@ func (r *Room) broadcastStatus() {
 		IsMyTurn := (currentPlayer.ID == playerID)
 		effectiveRev := (r.Game.IsRevolution != r.Game.Is11Back)
 
+		winnerName := ""
+		if len(r.Game.FinishedPlayers) > 0 {
+			// 1位抜けした人の名前を入れる
+			winnerName = r.Game.FinishedPlayers[0].Name
+		}
+
 		// ステータス作成
 		status := game.GameStatusPayload{
 			Hand:         myHand,              // 手札
@@ -141,6 +150,8 @@ func (r *Room) broadcastStatus() {
 			PlayerCount:  len(r.Game.Players), // 参加人数
 			IsMyTurn:     IsMyTurn,            // 自分の番?
 			IsRevolution: effectiveRev,        // 革命中？
+			IsActive:     r.Game.IsActive,     // ゲームがアクティブかどうか
+			WinnerName:   winnerName,          // 勝者の名前
 		}
 
 		// 観戦者なら全員のデータを添付する
