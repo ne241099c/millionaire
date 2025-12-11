@@ -32,7 +32,7 @@ export const useGame = () => {
         ws.onopen = () => {
             console.log("✅ サーバーに繋がりました")
             setIsConnected(true) // 画面をゲームモードに切り替え
-        }
+        };
 
         ws.onmessage = (event) => {
             // JSON文字データを、JSのオブジェクトに変換
@@ -42,17 +42,17 @@ export const useGame = () => {
             if (msg.type === "game_status") {
                 setGameState(msg.payload)
             }
-        }
+        };
 
         // 切断されたときの処理
         ws.onclose = () => {
             console.log("❌ 切断されました")
             setIsConnected(false) // ログイン画面に戻す
             setGameState(null)
-        }
+        };
 
         socketRef.current = ws
-    }
+    };
 
     const startGame = () => {
         if (!socketRef.current) return;
@@ -64,6 +64,22 @@ export const useGame = () => {
 
         socketRef.current.send(JSON.stringify(msg));
         console.log("📤 ゲーム開始リクエストを送信しました");
+    };
+
+    const playCards = (cards) => {
+        if (!socketRef.current) return;
+
+        const payload = {
+            cards: cards
+        };
+
+        const msg = {
+            type: "play_card",
+            payload: payload
+        };
+
+        socketRef.current.send(JSON.stringify(msg));
+        console.log("📤 カードを送信:", cards);
     };
 
     // 片付け
@@ -80,5 +96,6 @@ export const useGame = () => {
         gameState,
         connect,
         startGame,
+        playCards,
     };
 };

@@ -6,7 +6,7 @@ import './App.css'
 import DebugRoom from './pages/DebugRoom'
 
 function App() {
-  const { isConnected, gameState, connect , startGame} = useGame();
+  const { isConnected, gameState, connect, startGame, playCards} = useGame();
   const [currentUser, setCurrentUser] = useState({ name: '', room: '' });
 
   const handleJoin = (name, room) => {
@@ -24,9 +24,9 @@ function App() {
       username={currentUser.name}
       roomID={currentUser.room}
       onStart={startGame}
+      onPlay={playCards}
     />
   );
-
 
   // return (
   //   <>
