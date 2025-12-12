@@ -15,6 +15,7 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
     const isActive = gameState.is_active;
     const isMyTurn = gameState.is_my_turn;
     const winnerName = gameState.winner_name;
+    const allPlayers = gameState.all_players || []
 
     const toggleCard = (card) => {
         setSelectedCards(prev => {
@@ -61,12 +62,7 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
     if (!isActive && winnerName) {
         return (
             <div className={styles.container}>
-                <div style={{
-                    padding: '40px',
-                    background: 'white',
-                    borderRadius: '10px',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                }}>
+                <div className={styles.gameSet}>
                     <h1 style={{ color: '#E91E63', fontSize: '3rem' }}>🏆 GAME SET!</h1>
                     <h2>勝者: {winnerName}</h2>
                     <br />
@@ -92,7 +88,7 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
 
                 <button
                     onClick={logout}
-                    style={{ marginLeft: '10px', padding: '5px 10px', fontSize: '12px', background: '#666', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    className={styles.logoutButton}
                 >
                     退出する
                 </button>
@@ -110,15 +106,7 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
                         <button
                             onClick={onPass}
                             disabled={!isMyTurn}
-                            style={{
-                                padding: '10px 20px',
-                                fontSize: '16px',
-                                background: isMyTurn ? '#ff9800' : '#ccc', 
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: isMyTurn ? 'pointer' : 'not-allowed'
-                            }}>
+                            className={styles.passButton}>
                             🛑 パス
                         </button>
                     </div>
@@ -126,6 +114,26 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
             </header>
 
             <main>
+                <div className={styles.handInfo}>
+                    {allPlayers
+                        .filter(p => p.name !== username) // 自分は除外
+                        .map((p, i) => (
+                            <div key={i} className={styles.handInfoItem}>
+                                {/* 名前 */}
+                                <div style={{fontWeight: 'bold', fontSize: '0.9em'}}>{p.name}</div>
+                                
+                                {/* 残り枚数アイコン */}
+                                <div style={{fontSize: '2em'}}>🂠 {p.hand_count}</div>
+                                
+                                {/* 順位がついている場合 */}
+                                {p.rank > 0 && (
+                                    <div className={styles.handInfoRank}>
+                                        {p.rank}位
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                </div>
                 <h3>テーブル</h3>
                 <div
                     className={`${styles.tableArea} ${isDragOver ? styles.tableAreaActive : ''}`}

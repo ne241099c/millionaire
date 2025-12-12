@@ -109,9 +109,10 @@ func (r *Room) broadcastStatus() {
 	var allPlayersData []game.PlayerData
 	for _, p := range r.Game.Players {
 		allPlayersData = append(allPlayersData, game.PlayerData{
-			ID:   p.ID,
-			Hand: p.Hand,
-			Rank: p.Rank,
+			ID:        p.ID,
+			Hand:      nil,
+			HandCount: len(p.Hand),
+			Rank:      p.Rank,
 		})
 	}
 
@@ -152,6 +153,7 @@ func (r *Room) broadcastStatus() {
 			IsRevolution: effectiveRev,        // 革命中？
 			IsActive:     r.Game.IsActive,     // ゲームがアクティブかどうか
 			WinnerName:   winnerName,          // 勝者の名前
+			AllPlayers:   allPlayersData,      // 全プレイヤーの情報
 		}
 
 		// 観戦者なら全員のデータを添付する
