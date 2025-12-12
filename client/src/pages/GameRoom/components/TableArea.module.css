@@ -1,0 +1,24 @@
+.tableArea {
+  min-height: 150px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: rgba(0, 50, 0, 0.5);
+  border: 2px dashed #8bc34a;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s;
+}
+
+.tableAreaActive {
+  background-color: rgba(0, 100, 0, 0.6);
+  border-color: #fff;
+  transform: scale(1.02);
+}
+
+.noCards {
+  color: #ddd;
+  opacity: 0.5;
+}

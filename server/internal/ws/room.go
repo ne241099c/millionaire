@@ -110,6 +110,7 @@ func (r *Room) broadcastStatus() {
 	for _, p := range r.Game.Players {
 		allPlayersData = append(allPlayersData, game.PlayerData{
 			ID:        p.ID,
+			Name:      p.Name,
 			Hand:      nil,
 			HandCount: len(p.Hand),
 			Rank:      p.Rank,
@@ -146,14 +147,15 @@ func (r *Room) broadcastStatus() {
 
 		// ステータス作成
 		status := game.GameStatusPayload{
-			Hand:         myHand,              // 手札
-			TableCards:   r.Game.TableCards,   // 場のカード
-			PlayerCount:  len(r.Game.Players), // 参加人数
-			IsMyTurn:     IsMyTurn,            // 自分の番?
-			IsRevolution: effectiveRev,        // 革命中？
-			IsActive:     r.Game.IsActive,     // ゲームがアクティブかどうか
-			WinnerName:   winnerName,          // 勝者の名前
-			AllPlayers:   allPlayersData,      // 全プレイヤーの情報
+			Hand:          myHand,              // 手札
+			TableCards:    r.Game.TableCards,   // 場のカード
+			PlayerCount:   len(r.Game.Players), // 参加人数
+			IsMyTurn:      IsMyTurn,            // 自分の番?
+			IsRevolution:  effectiveRev,        // 革命中？
+			IsActive:      r.Game.IsActive,     // ゲームがアクティブかどうか
+			WinnerName:    winnerName,          // 勝者の名前
+			AllPlayers:    allPlayersData,      // 全プレイヤーの情報
+			CurrentTurnID: currentPlayer.ID,    // 現在のターンのプレイヤーID
 		}
 
 		// 観戦者なら全員のデータを添付する

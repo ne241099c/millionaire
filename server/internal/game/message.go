@@ -37,12 +37,13 @@ type PlayerData struct {
 }
 
 type GameStatusPayload struct {
-	Hand         []Card       `json:"hand"`          // あなたの手札
-	TableCards   []Card       `json:"table_cards"`   // 場に出ているカード
-	IsMyTurn     bool         `json:"is_my_turn"`    // あなたの番？
-	PlayerCount  int          `json:"player_count"`  // 参加人数
-	IsRevolution bool         `json:"is_revolution"` // 革命中？
-	AllPlayers   []PlayerData `json:"all_players"`   // 全プレイヤーの情報
-	WinnerName   string       `json:"winner_name"`   // 勝者の名前
-	IsActive     bool         `json:"is_active"`     // ゲームがアクティブかどうか
+	Hand          []Card       `json:"hand"`            // あなたの手札
+	TableCards    []Card       `json:"table_cards"`     // 場に出ているカード
+	IsMyTurn      bool         `json:"is_my_turn"`      // あなたの番？
+	PlayerCount   int          `json:"player_count"`    // 参加人数
+	IsRevolution  bool         `json:"is_revolution"`   // 革命中？
+	AllPlayers    []PlayerData `json:"all_players"`     // 全プレイヤーの情報
+	WinnerName    string       `json:"winner_name"`     // 勝者の名前
+	IsActive      bool         `json:"is_active"`       // ゲームがアクティブかどうか
+	CurrentTurnID string       `json:"current_turn_id"` // 現在のターンのプレイヤーID
 }

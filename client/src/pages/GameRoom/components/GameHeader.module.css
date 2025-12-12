@@ -1,0 +1,109 @@
+.header {
+	margin-bottom: 20px;
+	background: white;
+	padding: 15px 25px;
+	border-radius: 12px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 15px;
+}
+
+.roomInfo {
+	text-align: left;
+	display: flex;
+	flex-direction: column;
+}
+
+.roomInfo h1 {
+	margin: 0;
+	font-size: 1.4rem;
+	color: #333;
+}
+
+.playerInfo {
+	font-size: 0.9rem;
+	color: #666;
+	margin-top: 4px;
+}
+
+.actionArea {
+	display: flex;
+	align-items: center;
+	gap: 15px;
+}
+
+.revolutionBadge {
+	background: #d32f2f;
+	color: white;
+	font-weight: bold;
+	padding: 5px 15px;
+	border-radius: 20px;
+	font-size: 0.9rem;
+	animation: pulse 2s infinite;
+	margin: 0 10px;
+}
+
+.button {
+	padding: 10px 24px;
+	font-size: 15px;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	color: white;
+	font-weight: bold;
+	transition: all 0.2s;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 40px;
+}
+
+.button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.startButton {
+	background-color: #4CAF50;
+}
+
+.passButton {
+	background-color: #ff9800;
+}
+
+.passButtonDisabled {
+	background-color: #e0e0e0;
+	cursor: not-allowed;
+	color: #999;
+	box-shadow: none;
+	transform: none;
+}
+
+.logoutButton {
+	background-color: #78909c;
+}
+
+.logoutButton:hover {
+	background-color: #546e7a;
+}
+
+@keyframes pulse {
+	0% {
+		opacity: 0.8;
+	}
+
+	50% {
+		opacity: 1;
+		transform: scale(1.05);
+	}
+
+	100% {
+		opacity: 0.8;
+	}
+}

@@ -1,6 +1,11 @@
-import styles from './GameRoom.module.css';
-import { Card } from '../../components/Card/Card';
 import { useState } from 'react';
+import styles from './GameRoom.module.css';
+
+import { GameHeader } from './components/GameHeader';
+import { GameResult } from './components/GameResult';
+import { OpponentArea } from './components/OpponentArea';
+import { TableArea } from './components/TableArea';
+import { HandArea } from './components/HandArea';
 
 export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPass, logout }) => {
     const [selectedCards, setSelectedCards] = useState([]);
@@ -15,7 +20,10 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
     const isActive = gameState.is_active;
     const isMyTurn = gameState.is_my_turn;
     const winnerName = gameState.winner_name;
-    const allPlayers = gameState.all_players || []
+    const allPlayers = gameState.all_players || [];
+    const currentTurnID = gameState.current_turn_id;
+    const isRevolution = isActive && gameState.is_revolution;;
+    const effectiveMyTurn = isActive && isMyTurn;
 
     const toggleCard = (card) => {
         setSelectedCards(prev => {
@@ -61,117 +69,60 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
 
     if (!isActive && winnerName) {
         return (
-            <div className={styles.container}>
-                <div className={styles.gameSet}>
-                    <h1 style={{ color: '#E91E63', fontSize: '3rem' }}>🏆 GAME SET!</h1>
-                    <h2>勝者: {winnerName}</h2>
-                    <br />
-                    <button
-                        className={styles.button}
-                        onClick={onStart}
-                        style={{ fontSize: '1.2em', padding: '15px 30px' }}
-                    >
-                        もう一度遊ぶ
-                    </button>
-                    <br /><br />
-                    <button onClick={logout}>退出する</button>
-                </div>
-            </div>
+            <GameResult
+                winnerName={winnerName}
+                onStart={onStart}
+                logout={logout}
+            />
         );
     }
 
+    const containerClass = `
+        ${styles.container} 
+        ${isRevolution ? styles.revolution : ''}
+        ${effectiveMyTurn ? styles.myTurn : ''}
+    `;
+
     return (
-        <div className={styles.container}>
-            <header className={styles.header}>
-                <h1>Room: {roomID}</h1>
-                <p>Player: {username}</p>
-
-                <button
-                    onClick={logout}
-                    className={styles.logoutButton}
-                >
-                    退出する
-                </button>
-
-                {!isActive && (
-                    <div style={{ margin: '10px 0' }}>
-                        <button className={styles.button} onClick={onStart}>
-                            ▶ ゲーム開始
-                        </button>
-                    </div>
-                )}
-
-                {isActive && (
-                    <div style={{ margin: '10px 0' }}>
-                        <button
-                            onClick={onPass}
-                            disabled={!isMyTurn}
-                            className={styles.passButton}>
-                            🛑 パス
-                        </button>
-                    </div>
-                )}
-            </header>
-
+        <div className={containerClass}>
+            {/* ヘッダー: 部屋情報、ボタン類 */}
+            <GameHeader
+                roomID={roomID}
+                username={username}
+                isActive={isActive}
+                isMyTurn={effectiveMyTurn}
+                isRevolution={isRevolution}
+                onStart={onStart}
+                onPass={onPass}
+                logout={logout}
+            />
             <main>
-                <div className={styles.handInfo}>
-                    {allPlayers
-                        .filter(p => p.name !== username) // 自分は除外
-                        .map((p, i) => (
-                            <div key={i} className={styles.handInfoItem}>
-                                {/* 名前 */}
-                                <div style={{fontWeight: 'bold', fontSize: '0.9em'}}>{p.name}</div>
-                                
-                                {/* 残り枚数アイコン */}
-                                <div style={{fontSize: '2em'}}>🂠 {p.hand_count}</div>
-                                
-                                {/* 順位がついている場合 */}
-                                {p.rank > 0 && (
-                                    <div className={styles.handInfoRank}>
-                                        {p.rank}位
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                </div>
-                <h3>テーブル</h3>
-                <div
-                    className={`${styles.tableArea} ${isDragOver ? styles.tableAreaActive : ''}`}
+                {/* 相手エリア: 画面上部に並ぶ */}
+                <OpponentArea
+                    allPlayers={allPlayers}
+                    currentTurnID={currentTurnID}
+                    username={username}
+                    isActive={isActive}
+                />
+
+                {/* テーブルエリア: カードを出す場所 */}
+                <TableArea
+                    tableCards={tableCards}
+                    isDragOver={isDragOver}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                >
-                    {/* 場に出ているカードを表示 */}
-                    {tableCards.length > 0 ? (
-                        tableCards.map((card, i) => (
-                            <Card
-                                key={`table-${i}`}
-                                card={card}
-                                isSelected={false}
-                            />
-                        ))
-                    ) : (
-                        <span style={{ color: '#ddd', opacity: 0.5 }}>No Cards</span>
-                    )}
-                </div>
+                />
 
-                <h3>あなたの手札 ({hand.length}枚)</h3>
-
-                <div className={styles.handArea}>
-                    {hand.length > 0 ? (
-                        hand.map((card, index) => (
-                            <Card
-                                key={`${card.Suit}-${card.Rank}`}
-                                card={card}
-                                onClick={() => toggleCard(card)}
-                                isSelected={isSelected(card)}
-                                onDragStart={(e) => handleDragStart(e, card)}
-                            />
-                        ))
-                    ) : (
-                        <p className={styles.message}>手札がありません</p>
-                    )}
-                </div>
+                {/* 手札エリア: 自分のカード */}
+                <HandArea
+                    hand={hand}
+                    username={username}
+                    isMyTurn={effectiveMyTurn}
+                    toggleCard={toggleCard}
+                    isSelected={isSelected}
+                    onDragStart={handleDragStart}
+                />
 
                 {/* デバッグ用 */}
                 <details className={styles.debug}>
