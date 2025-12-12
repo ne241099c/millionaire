@@ -2,11 +2,12 @@ import React from 'react';
 import styles from './OpponentArea.module.css';
 
 export const OpponentArea = ({ allPlayers, currentTurnID, username, isActive }) => {
-    const opponents = allPlayers.filter(p => p.name !== username);
+    const players = allPlayers;
     return (
         <div className={styles.container}>
-            {opponents.map((p, i) => {
+            {players.map((p, i) => {
                 const isTurn = isActive && (p.id === currentTurnID);
+                const isMe = p.name === username;
 
                 const cardClass = `
                     ${styles.opponentCard} 
@@ -21,7 +22,7 @@ export const OpponentArea = ({ allPlayers, currentTurnID, username, isActive }) 
                                 🂠 {p.hand_count}
                             </div>
                             <div className={isTurn ? styles.nameActive : styles.name}>
-                                {p.name}
+                                {isMe ? `You (${p.name})` : p.name}
                             </div>
                         </div>
 

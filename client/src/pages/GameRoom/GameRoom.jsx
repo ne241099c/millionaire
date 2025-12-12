@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './GameRoom.module.css';
 
 import { GameHeader } from './components/GameHeader';
@@ -10,6 +10,17 @@ import { HandArea } from './components/HandArea';
 export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPass, logout }) => {
     const [selectedCards, setSelectedCards] = useState([]);
     const [isDragOver, setIsDragOver] = useState(false);
+    const [showResult, setShowResult] = useState(false);
+    const isActive = gameState?.is_active;
+    const winnerName = gameState?.winner_name;
+
+    useEffect(() => {
+        if (!isActive && winnerName) {
+            setShowResult(true);
+        } else if (isActive) {
+            setShowResult(false);
+        }
+    }, [isActive, winnerName, gameState]);
 
     if (!gameState) {
         return <div className={styles.container}>データ待機中...</div>;
@@ -17,13 +28,16 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
 
     const hand = gameState.hand || [];
     const tableCards = gameState.table_cards || [];
-    const isActive = gameState.is_active;
     const isMyTurn = gameState.is_my_turn;
-    const winnerName = gameState.winner_name;
     const allPlayers = gameState.all_players || [];
     const currentTurnID = gameState.current_turn_id;
-    const isRevolution = isActive && gameState.is_revolution;;
+    const isRevolution = gameState.is_revolution;
+
     const effectiveMyTurn = isActive && isMyTurn;
+
+    const handleBackToLobby = () => {
+        setShowResult(false);
+    };
 
     const toggleCard = (card) => {
         setSelectedCards(prev => {
@@ -67,11 +81,11 @@ export const GameScreen = ({ gameState, roomID, username, onStart, onPlay, onPas
         setSelectedCards([]); // 選択解除
     };
 
-    if (!isActive && winnerName) {
+    if (!isActive && winnerName && showResult) {
         return (
             <GameResult
-                winnerName={winnerName}
-                onStart={onStart}
+                allPlayers={allPlayers}
+                onReset={handleBackToLobby}
                 logout={logout}
             />
         );
